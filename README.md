@@ -21,6 +21,9 @@ keys, swipe on a touch screen, or press <kbd>Play</kbd> to let it turn itself.
 contents grid. Every photograph has its own link — `index.html#p=17` opens
 straight to number 17.
 
+At the end of the album the closing page and the back cover each carry a
+control back to the start, so there is a way round without a keyboard.
+
 The book fills the window. On a wide screen it opens as a two-page spread;
 below 800px it becomes a single page, so it reads properly on a phone. The
 controls fade out after a few seconds of stillness and return on any movement.

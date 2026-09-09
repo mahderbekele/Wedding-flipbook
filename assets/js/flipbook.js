@@ -324,9 +324,19 @@
     var meta = h("div", "end__meta");
     meta.textContent = COUPLE.one + " & " + COUPLE.two;
     inner.appendChild(meta);
+    inner.appendChild(restartButton("Read it again"));
 
     p.appendChild(inner);
     return p;
+  }
+
+  /* Offered at the end of the album, where turning forward has run out. The
+     click is caught by the book's own handler rather than this element, so it
+     works even though copies of it ride along inside the turning page. */
+  function restartButton(label) {
+    var btn = h("button", "restart", { type: "button", "data-action": "restart" });
+    btn.textContent = label;
+    return btn;
   }
 
   /* The outside of the back cover: the same cutouts as the front, and nothing
@@ -343,6 +353,7 @@
     mark.textContent = COUPLE.one.charAt(0) + " & " + COUPLE.two.charAt(0);
     inner.appendChild(mark);
     inner.appendChild(ornament());
+    inner.appendChild(restartButton("Back to the beginning"));
     p.appendChild(inner);
 
     return p;
@@ -507,7 +518,7 @@
     }
     dropCurl();
 
-    var wrap = h("div", "curl");
+    var wrap = h("div", "curl", { "aria-hidden": "true" });
     var sheet = h("div", "curl__sheet");
     var w = W / STRIPS;
     var strips = [];
@@ -570,6 +581,11 @@
         clone.style.width = box.W + "px";
         clone.style.height = box.H + "px";
         clone.style.left = st.offsets[f] + "px";
+
+        /* A slice is scenery: keep its copies out of the tab order. */
+        var buttons = clone.querySelectorAll("button");
+        for (var q = 0; q < buttons.length; q++) buttons[q].tabIndex = -1;
+
         face.insertBefore(clone, face.firstChild);   /* shade stays on top */
       }
     });
@@ -1058,10 +1074,17 @@
     el.play.addEventListener("click", toggleAutoplay);
     if (el.full) el.full.addEventListener("click", toggleFullscreen);
 
-    /* Click the page itself: left half goes back, right half goes on. */
     el.book.addEventListener("click", function (ev) {
-      var rect = el.book.getBoundingClientRect();
       stopAutoplay();
+
+      if (ev.target.closest('[data-action="restart"]')) {
+        setPos(0, false);
+        el.live.textContent = "Back at the cover";
+        return;
+      }
+
+      /* Otherwise the page itself: left half goes back, right half goes on. */
+      var rect = el.book.getBoundingClientRect();
       go(ev.clientX - rect.left < rect.width / 2 ? -1 : 1);
     });
 
