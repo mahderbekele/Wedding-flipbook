@@ -1,0 +1,46 @@
+# The running order of the album, one photograph per line.
+#
+#   original filename in images/ | chapter | caption | alt text
+#
+# Chapter and caption are printed on the page, and only on the photograph that
+# opens a chapter — leave them empty for every other line. Alt text is read
+# aloud by screen readers, so describe what is in the frame.
+#
+# Reorder, add or remove lines and re-run tools/build-photos.sh.
+
+DSC01644 copy.jpg|At the lodge|Where the day began|Bride and groom hand in hand in a lodge corridor, her ball gown trailing across the wood floor
+DSC01616 copy.jpg|||The bride leaning against a gallery wall in her ball gown while the groom watches from a bench
+IMG_3394.JPG|||The bride seated with her gown spread wide across the floor, the groom standing behind her
+DSC01683 copy.jpg|||Black and white: the bride perched with her gown fanned out and the groom seated at her feet
+DSC01763 copy.jpg|Quiet hours|Warm lamps, and all the time in the world|The groom alone at a chess board in a lamplit bedroom
+DSC01770 copy.jpg|||The bride arriving at the chess board where the groom sits thinking
+DSC01783-2 copy.jpg|||Bride and groom leaning over the chess board, face to face
+DSC01759 copy.jpg|||Black and white: the groom mid-move at the chess board
+DSC01740 copy.jpg|||Black and white: the couple close together on a bed in a darkened room
+DSC01796 copy.jpg|||The couple dancing together in the lodge, her gown spinning out
+DSC02070-Enhanced-NR.jpg|Golden hour|Under the old trees|The bride among the trees at golden hour, the groom out of focus in the foreground
+DSC02030-Enhanced-NR.jpg|||The couple resting against a leaning tree in the forest
+DSC01997-Enhanced-NR.jpg|||The couple walking hand in hand through the woods, her train sweeping the leaves
+DSC02093-Enhanced-NR.jpg|||The bride alone beneath the trees, her veil falling the full length of her gown
+IMG_3386.JPG|Wide open|Green as far as the eye could see|The couple crossing a wide green lawn, seen from above
+IMG_3387.JPG|||The couple close together on the lawn, her train circling around them
+IMG_3388.JPG|||The couple walking down the lawn toward the valley beyond
+IMG_3390.JPG|An afternoon|Nothing to do but play|The couple riding a white golf cart along a tree-lined road, tennis rackets in hand
+IMG_3393.JPG|||Black and white: the couple meeting for a high five over the tennis net
+IMG_3392.JPG|||The couple embracing at the tennis net, rackets still in hand
+DSC02466 copy.jpg|Evening|City lights, and the two of them|Black and white: the couple on a curving sofa in a glass-walled lounge
+DSC02451 copy.jpg|||The couple on the curved lounge sofa, both dressed in white
+DSC02483 copy.jpg|||The couple stretched out along the curved sofa in the lounge
+DSC02488 copy.jpg|||The couple standing together by the lounge windows at night
+DSC02349-Enhanced-NR copy.jpg|Night lights|The city put on a show|The couple embracing on a lit walkway beneath a glowing tower at night
+DSC02425-Enhanced-NR copy.jpg|||The couple holding each other on the walkway, the tower lit teal behind them
+DSC02409-Enhanced-NR copy.jpg|||Black and white: the couple walking hand in hand toward the lit tower
+IMG_3404.JPG|Sunset over the valley|The last light of the day|The couple far off on a deck, the valley turning gold around them
+IMG_3403.JPG|||The couple on a clifftop deck, the hillside lodge and the valley stretching away
+IMG_3398.JPG|||The couple looking out from the deck as the sun goes down over the valley
+IMG_3396.JPG|||The couple embracing at the deck railing as the sun sets over the valley
+IMG_3400.JPG|||The bride alone on the deck, her gown catching the last of the light
+IMG_3402.JPG|||The groom leaning in to kiss the bride's hand on the deck, the valley behind them
+IMG_3399.JPG|||The bride walking toward the groom along the deck at sunset
+IMG_3397.JPG|||The couple close together at the edge of the deck, the valley below
+IMG_3401.JPG|||Black and white: the couple looking out over the valley together

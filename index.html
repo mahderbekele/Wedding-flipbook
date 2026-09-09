@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Haymi &amp; Messi — Our Wedding Album</title>
+<meta name="description" content="A page-turning album of Haymi and Messi's wedding.">
+<meta name="theme-color" content="#16120f">
+
+<meta property="og:title" content="Haymi &amp; Messi — Our Wedding Album">
+<meta property="og:description" content="A page-turning album of Haymi and Messi's wedding.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="photos/01.webp">
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%F0%9F%92%8D%3C/text%3E%3C/svg%3E">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- Loaded without blocking the first paint. A stylesheet normally holds the
+     whole page back, and on a venue's wifi that request can hang for a long
+     time — the album should open in Georgia rather than not open at all. -->
+<link rel="stylesheet" media="print" onload="this.media='all'"
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Jost:wght@300;400&display=swap">
+
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<!-- Opening veil ------------------------------------------------------------->
+<div class="veil" role="status" aria-label="Loading the album">
+  <div class="veil__inner">
+    <p class="veil__names">Haymi <span class="amp">&amp;</span> Messi</p>
+    <div class="veil__bar"><span></span></div>
+  </div>
+</div>
+
+<div class="app">
+
+  <!-- The book, filling the window --------------------------------------->
+  <main class="stage">
+    <div class="book" aria-label="Wedding album"></div>
+
+    <button class="nav nav--prev" type="button" aria-label="Previous page">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M15 4 L7 12 L15 20"/>
+      </svg>
+    </button>
+
+    <button class="nav nav--next" type="button" aria-label="Next page">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M9 4 L17 12 L9 20"/>
+      </svg>
+    </button>
+  </main>
+
+  <!-- Controls ------------------------------------------------------------->
+  <footer class="toolbar">
+    <button class="tool" type="button" data-action="contents"
+            aria-expanded="false" aria-controls="contents">
+      <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+        <rect x="1" y="1" width="6" height="6" rx="1"/>
+        <rect x="9" y="1" width="6" height="6" rx="1"/>
+        <rect x="1" y="9" width="6" height="6" rx="1"/>
+        <rect x="9" y="9" width="6" height="6" rx="1"/>
+      </svg>
+      <span>Contents</span>
+    </button>
+
+    <p class="counter" aria-hidden="true">Cover</p>
+
+    <button class="tool" type="button" data-action="autoplay" aria-pressed="false">
+      <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+        <path d="M4 2 L13 8 L4 14 Z"/>
+      </svg>
+      <span>Play</span>
+    </button>
+
+    <button class="tool" type="button" data-action="fullscreen">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M1.5 5.5v-4h4M10.5 1.5h4v4M14.5 10.5v4h-4M5.5 14.5h-4v-4"/>
+      </svg>
+      <span>Full screen</span>
+    </button>
+  </footer>
+</div>
+
+<!-- Contents ----------------------------------------------------------------->
+<section class="contents" id="contents" aria-hidden="true" aria-label="Contents">
+  <div class="contents__head">
+    <h2 class="contents__title">Contents</h2>
+    <button class="tool" type="button" data-action="contents-close">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"
+           stroke-linecap="round" aria-hidden="true">
+        <path d="M3 3l10 10M13 3L3 13"/>
+      </svg>
+      <span>Close</span>
+    </button>
+  </div>
+  <div class="contents__grid"></div>
+</section>
+
+<p id="live" class="visually-hidden" role="status" aria-live="polite"></p>
+
+<script src="assets/js/photos.js"></script>
+<script src="assets/js/flipbook.js"></script>
+</body>
+</html>

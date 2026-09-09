@@ -1,0 +1,7 @@
+# Camera originals: ~1.7 GB, and far too large to put in git.
+# Everything the album actually serves is generated from these into photos/
+# by tools/build-photos.sh, and photos/ *is* committed.
+images/
+
+.DS_Store
+node_modules/

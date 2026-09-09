@@ -1,0 +1,841 @@
+/* ==========================================================================
+   Haymi & Messi — wedding flipbook
+   ========================================================================== */
+
+:root {
+  /* Paper & ink — near-black stock, gold leaf */
+  --page:         #14110d;
+  --page-lift:    #1d1811;
+  --page-deep:    #0d0b08;
+  --ink:          #e9dcc0;
+  --ink-soft:     #9c8a6a;
+  --gold:         #c9a44c;
+  --gold-bright:  #ecd18a;
+  --gold-dim:     #7f6733;
+
+  /* Room around the book */
+  --room:         #080706;
+
+  /* Motion */
+  --turn:         720ms;
+
+  /* Set by JS from the measured stage */
+  --pw:           320px;              /* page width  */
+  --ph:           480px;              /* page height */
+
+  --serif: "Cormorant Garamond", "Cormorant", Garamond, Georgia, "Times New Roman", serif;
+  --sans:  "Jost", "Futura", "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--room);
+  color: var(--ink);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+
+:focus-visible {
+  outline: 2px solid var(--gold-bright);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   Shell — the book fills the window; everything else floats over it
+   ========================================================================== */
+
+.app {
+  position: relative;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.stage {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
+/* The book stays a flat stacking context. Perspective lives on each leaf —
+   inside a `preserve-3d` parent z-index is ignored and the coplanar leaves
+   would z-fight instead of stacking. */
+.book {
+  position: relative;
+  width: calc(var(--pw) * 2);
+  height: var(--ph);
+  /* Matches the page turn, so opening the cover moves as one thing. */
+  transition: transform var(--turn) cubic-bezier(0.45, 0, 0.25, 1);
+}
+
+/* Closed at the front: slide over so the cover sits centred in the window.
+   Closed at the back: slide the other way. */
+.book[data-shift="front"] { transform: translateX(-25%); }
+.book[data-shift="back"]  { transform: translateX(25%); }
+
+.mode-single .book {
+  width: var(--pw);
+  transform: none;
+}
+
+/* --- Leaves ------------------------------------------------------------- */
+
+.leaf {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 50%;
+  height: 100%;
+  /* Vanishing point sits on the spine, which is this leaf's hinged edge. */
+  perspective: 2800px;
+  perspective-origin: 0% 48%;
+}
+
+.mode-single .leaf { left: 0; width: 100%; }
+
+.leaf[hidden] { display: none !important; }
+
+.leaf__inner {
+  position: absolute;
+  inset: 0;
+  transform-origin: left center;
+  transform-style: preserve-3d;
+}
+
+.leaf.is-flipped .leaf__inner { transform: rotateY(-180deg); }
+
+.face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  overflow: hidden;
+  background: var(--page);
+}
+
+.face--back { transform: rotateY(180deg); }
+
+/* ==========================================================================
+   Pages
+   ========================================================================== */
+
+.page {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: var(--page);
+  color: var(--ink);
+  font-size: calc(var(--pw) / 24);
+  display: flex;
+  flex-direction: column;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+/* Gutter shading — the page falling away into the spine. */
+.page::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 11%;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.page[data-side="right"]::before {
+  left: 0;
+  background: linear-gradient(90deg,
+    rgba(0, 0, 0, 0.68) 0%,
+    rgba(0, 0, 0, 0.30) 24%,
+    rgba(0, 0, 0, 0.08) 58%,
+    transparent 100%);
+}
+
+.page[data-side="left"]::before {
+  right: 0;
+  background: linear-gradient(270deg,
+    rgba(0, 0, 0, 0.68) 0%,
+    rgba(0, 0, 0, 0.30) 24%,
+    rgba(0, 0, 0, 0.08) 58%,
+    transparent 100%);
+}
+
+.mode-single .page::before { display: none; }
+
+/* --- Photo pages -------------------------------------------------------- */
+
+.page__photo {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Where a photograph cannot fill the page without losing too much of itself,
+   an enlarged, blurred copy of it fills the page behind — so the page still
+   runs edge to edge and nothing gets cropped away. */
+/* Only the pages that need one pay for it: a 38px blur is expensive, and a
+   turning page carries a copy of itself in every strip. */
+.page__backdrop { display: none; }
+
+.page__photo.is-contain .page__backdrop {
+  display: block;
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  transform: scale(1.25);
+  filter: blur(52px) saturate(0.55) brightness(0.42);
+}
+
+.page__photo img {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 620ms ease;
+}
+
+.page__photo.is-contain img { object-fit: contain; }
+.page__photo img.is-loaded { opacity: 1; }
+
+/* --- A photograph printed across the gutter ------------------------------
+   Both halves hold the same image at twice a page's width; each page shows
+   its own half, so the picture runs unbroken across the open book. */
+.page__photo--span img {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 200%;
+  max-width: none;
+  object-fit: cover;
+}
+
+.page[data-half="left"]  .page__photo--span img { left: 0; }
+.page[data-half="right"] .page__photo--span img { left: -100%; }
+
+/* A soft fold rather than a page edge: the picture carries on through the
+   spine, so the shading only has to suggest paper bending, not stop the eye. */
+.page--span::before {
+  width: 6.5%;
+  opacity: 0.34;
+}
+
+/* --- Chapter plates ----------------------------------------------------- */
+
+.plate {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  /* The toolbar floats over the bottom of the page — keep clear of it. */
+  padding: 14% 9% max(8%, 4.6rem);
+  background: linear-gradient(0deg,
+    rgba(6, 4, 2, 0.90) 0%,
+    rgba(6, 4, 2, 0.55) 46%,
+    transparent 100%);
+  color: var(--ink);
+  pointer-events: none;
+}
+
+.plate__eyebrow {
+  margin: 0 0 0.34em;
+  font-family: var(--sans);
+  font-size: 0.42em;
+  font-weight: 400;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.plate__title {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 1.32em;
+  font-weight: 500;
+  line-height: 1.12;
+  letter-spacing: 0.012em;
+  color: var(--gold-bright);
+}
+
+.plate__caption {
+  margin: 0.42em 0 0;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 0.62em;
+  line-height: 1.4;
+  color: var(--ink);
+  opacity: 0.82;
+}
+
+/* --- Folio (page numbers) ----------------------------------------------- */
+
+.folio {
+  position: absolute;
+  bottom: 2.2%;
+  z-index: 7;
+  font-family: var(--sans);
+  font-size: 0.34em;
+  letter-spacing: 0.24em;
+  color: var(--gold);
+  opacity: 0.85;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+}
+
+.page[data-side="right"] .folio { right: 7%; }
+.page[data-side="left"]  .folio { left: 7%; }
+.mode-single .folio { right: 7%; left: auto; }
+
+/* ==========================================================================
+   Cover & closing page
+   ========================================================================== */
+
+.page--cover,
+.page--end {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 7%;
+  background:
+    radial-gradient(120% 80% at 50% 38%, #241d13 0%, #16120c 52%, var(--page-deep) 100%);
+}
+
+.page--cover::before,
+.page--end::before { display: none; }
+
+/* Both covers: a close cutout of every photograph in the album, with the light
+   pulled down in the middle so the gold reads cleanly over it. */
+.cover__mosaic {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: grid;
+  gap: 2px;
+  background: var(--page-deep);
+}
+
+.cover__cut {
+  /* Zoomed well past the tile so each one is a fragment of a photograph, not a
+     thumbnail of it. Sitting a little above centre tends to catch faces. */
+  background-size: auto 215%;
+  background-position: center 38%;
+  background-repeat: no-repeat;
+  filter: grayscale(0.2) sepia(0.26) brightness(0.82) contrast(1.04);
+}
+
+.cover__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  /* Held back just enough to keep the gold legible. The lettering carries its
+     own shadow, so the scrim does not have to blacken half the cover to do it
+     — the cutouts are the point of the cover, and they have to read. */
+  background:
+    radial-gradient(52% 34% at 50% 46%,
+      rgba(8, 6, 4, 0.66) 0%,
+      rgba(8, 6, 4, 0.52) 46%,
+      rgba(8, 6, 4, 0.26) 78%,
+      rgba(8, 6, 4, 0.12) 100%),
+    linear-gradient(180deg,
+      rgba(8, 6, 4, 0.34) 0%,
+      rgba(8, 6, 4, 0.06) 34%,
+      rgba(8, 6, 4, 0.40) 100%);
+}
+
+.cover__inner,
+.end__inner {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  width: 100%;
+  height: 100%;
+  padding: 8% 6%;
+  border: 1px solid rgba(201, 164, 76, 0.42);
+  box-shadow:
+    inset 0 0 0 4px rgba(8, 6, 4, 0.55),
+    inset 0 0 0 5px rgba(201, 164, 76, 0.20),
+    0 0 90px rgba(8, 6, 4, 0.85);
+}
+
+.cover__eyebrow,
+.end__eyebrow {
+  font-size: 0.4em;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  color: #d9c9a6;
+  text-indent: 0.42em;
+  text-shadow: 0 1px 10px rgba(6, 4, 2, 0.95);
+}
+
+.cover__names {
+  margin: 0.18em 0 0;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 1.9em;
+  line-height: 1.02;
+  letter-spacing: 0.02em;
+  /* Gold leaf, caught by the light. */
+  background: linear-gradient(168deg, #f6e6b4 4%, var(--gold) 38%, #9c7c33 62%, #f0d79a 96%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 16px rgba(6, 4, 2, 0.95))
+          drop-shadow(0 1px 3px rgba(6, 4, 2, 0.8));
+}
+
+.cover__names .amp {
+  display: block;
+  margin: 0.06em 0;
+  font-size: 0.62em;
+  font-style: italic;
+}
+
+.ornament {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  width: 68%;
+  margin: 0.5em 0;
+  color: var(--gold);
+}
+
+.ornament::before,
+.ornament::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, currentColor);
+}
+
+.ornament::after { background: linear-gradient(270deg, transparent, currentColor); }
+
+.ornament__mark {
+  font-size: 0.5em;
+  letter-spacing: 0.3em;
+  text-indent: 0.3em;
+}
+
+.cover__meta,
+.end__meta {
+  font-size: 0.38em;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--gold-bright);
+  text-indent: 0.3em;
+  text-shadow: 0 1px 10px rgba(6, 4, 2, 0.95);
+}
+
+.back__mark {
+  font-family: var(--serif);
+  font-size: 1.5em;
+  letter-spacing: 0.18em;
+  text-indent: 0.18em;
+  background: linear-gradient(168deg, #f6e6b4 4%, var(--gold) 38%, #9c7c33 62%, #f0d79a 96%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 16px rgba(6, 4, 2, 0.95));
+}
+
+.cover__hint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: max(8%, 6.6rem);
+  font-size: 0.32em;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--gold-dim);
+  animation: breathe 3.4s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%, 100% { opacity: 0.3; }
+  50%      { opacity: 0.9; }
+}
+
+.end__note {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 0.62em;
+  line-height: 1.55;
+  color: var(--ink);
+  opacity: 0.94;
+  max-width: 22ch;
+  text-shadow: 0 1px 12px rgba(6, 4, 2, 0.95);
+}
+
+.page--blank {
+  background: linear-gradient(158deg, var(--page-lift) 0%, var(--page-deep) 100%);
+}
+
+/* ==========================================================================
+   The turning page
+
+   A leaf mid-turn is not this flat plane — it is a sheet of paper that bows.
+   During a turn the real leaf is hidden and replaced by this: the same two
+   pages sliced into vertical strips, each one placed along a curve and lit
+   according to which way it faces. See buildCurl() in flipbook.js.
+   ========================================================================== */
+
+.curl {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 50%;
+  height: 100%;
+  z-index: 400;
+  perspective: 2800px;
+  perspective-origin: 0% 48%;
+  pointer-events: none;
+}
+
+.mode-single .curl { left: 0; width: 100%; }
+
+.curl__sheet {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+
+.strip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  transform-origin: 0 50%;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+/* A slice must paint identically to the page it stands in for, or the swap
+   shows at each end of the turn. */
+.strip__clone { isolation: auto !important; }
+
+.strip__face {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.strip__face--back { transform: rotateY(180deg); }
+
+.strip__clone {
+  position: absolute;
+  top: 0;
+}
+
+/* Its own compositor layer: without this, changing the shade's opacity each
+   frame repaints the page slice underneath it. */
+.strip__shade {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  will-change: opacity;
+}
+
+/* ==========================================================================
+   Controls — floating, and out of the way when you are just looking
+   ========================================================================== */
+
+.nav {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: clamp(48px, 8vw, 110px);
+  display: grid;
+  place-items: center;
+  z-index: 500;
+  color: var(--gold-bright);
+  opacity: 0.28;
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+
+.nav:hover,
+.nav:focus-visible { opacity: 0.95; }
+.nav[disabled] { opacity: 0; cursor: default; }
+
+.nav--prev { left: 0; }
+.nav--next { right: 0; }
+.nav--prev:hover { transform: translateX(-3px); }
+.nav--next:hover { transform: translateX(3px); }
+
+.nav svg {
+  width: clamp(22px, 2.4vw, 32px);
+  height: auto;
+  filter: drop-shadow(0 1px 6px rgba(0, 0, 0, 0.9));
+}
+
+.toolbar {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(0.9rem, 3vh, 2rem);
+  transform: translateX(-50%);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  gap: clamp(0.25rem, 1.4vw, 0.7rem);
+  padding: 0.4rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(10, 8, 6, 0.82);
+  border: 1px solid rgba(201, 164, 76, 0.18);
+}
+
+/* Everything fades away while you read, and comes back on any nudge. */
+.chrome-idle .toolbar,
+.chrome-idle .nav {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.toolbar, .nav { transition: opacity 500ms ease, transform 220ms ease; }
+
+.tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  padding: 0.5em 0.85em;
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  border-radius: 999px;
+  transition: color 180ms ease, background-color 180ms ease;
+}
+
+.tool:hover { color: var(--gold-bright); background: rgba(201, 164, 76, 0.1); }
+.tool[aria-pressed="true"] {
+  color: #14110d;
+  background: var(--gold-bright);
+}
+
+.tool svg { width: 14px; height: 14px; }
+
+.counter {
+  min-width: 8ch;
+  margin: 0;
+  font-size: 0.68rem;
+  letter-spacing: 0.22em;
+  text-align: center;
+  color: var(--gold-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.counter b { color: var(--gold-bright); font-weight: 400; }
+
+/* ==========================================================================
+   Contents overlay
+   ========================================================================== */
+
+.contents {
+  position: fixed;
+  inset: 0;
+  z-index: 600;
+  display: flex;
+  flex-direction: column;
+  background: rgba(6, 5, 4, 0.97);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 260ms ease, visibility 260ms;
+}
+
+.contents.is-open { opacity: 1; visibility: visible; }
+
+.contents__head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: clamp(1rem, 3vh, 1.8rem) clamp(1rem, 4vw, 3rem) 1rem;
+  border-bottom: 1px solid rgba(201, 164, 76, 0.16);
+}
+
+.contents__title {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: clamp(1.1rem, 3vw, 1.6rem);
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold-bright);
+}
+
+.contents__grid {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: clamp(0.6rem, 1.6vw, 1.2rem);
+  padding: clamp(1rem, 3vh, 2rem) clamp(1rem, 4vw, 3rem) 3rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.thumb {
+  position: relative;
+  display: block;
+  padding: 0;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  background: var(--page-lift);
+  border: 1px solid rgba(201, 164, 76, 0.14);
+  transition: border-color 200ms ease, transform 200ms ease;
+}
+
+.thumb:hover,
+.thumb:focus-visible {
+  border-color: var(--gold-bright);
+  transform: translateY(-2px);
+}
+
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.thumb__no {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  padding: 0.35em 0.6em;
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  color: var(--gold-bright);
+  background: linear-gradient(0deg, rgba(6, 4, 2, 0.9), transparent);
+  text-align: left;
+}
+
+.thumb.is-current {
+  border-color: var(--gold-bright);
+  box-shadow: 0 0 0 2px rgba(236, 209, 138, 0.35);
+}
+
+.thumb__chapter {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 0.4em 0.6em;
+  font-size: 0.56rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #14110d;
+  background: rgba(236, 209, 138, 0.92);
+  text-align: center;
+}
+
+/* ==========================================================================
+   Loading veil
+   ========================================================================== */
+
+.veil {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  display: grid;
+  place-items: center;
+  background: var(--room);
+  transition: opacity 700ms ease, visibility 700ms;
+}
+
+.veil.is-done { opacity: 0; visibility: hidden; }
+
+.veil__inner { text-align: center; }
+
+.veil__names {
+  margin: 0 0 0.7rem;
+  font-family: var(--serif);
+  font-size: clamp(1.6rem, 6vw, 3rem);
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  background: linear-gradient(168deg, #f6e6b4 4%, var(--gold) 40%, #9c7c33 64%, #f0d79a 96%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.veil__bar {
+  position: relative;
+  width: min(220px, 50vw);
+  height: 1px;
+  margin: 0 auto;
+  overflow: hidden;
+  background: rgba(201, 164, 76, 0.2);
+}
+
+.veil__bar span {
+  position: absolute;
+  inset: 0;
+  transform-origin: left center;
+  transform: scaleX(0);
+  background: var(--gold);
+  transition: transform 300ms ease;
+}
+
+/* ==========================================================================
+   Responsive & motion preferences
+   ========================================================================== */
+
+@media (max-width: 800px) {
+  .nav { display: none; }
+}
+
+@media (max-width: 560px) {
+  .tool span { display: none; }
+  .tool { padding: 0.6em; }
+  .counter { min-width: 6ch; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --turn: 1ms; }
+  .book { transition-duration: 1ms; }
+  .back__mark {
+  font-family: var(--serif);
+  font-size: 1.5em;
+  letter-spacing: 0.18em;
+  text-indent: 0.18em;
+  background: linear-gradient(168deg, #f6e6b4 4%, var(--gold) 38%, #9c7c33 62%, #f0d79a 96%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 16px rgba(6, 4, 2, 0.95));
+}
+
+.cover__hint { animation: none; }
+  .page__photo img { transition-duration: 1ms; }
+}
